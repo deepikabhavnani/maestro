@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 	"testing"
 
 	"github.com/armPelionEdge/gopsutil/disk"
@@ -28,6 +29,7 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
+// Test to check disk stats from gopsutil package
 func TestDiskStatGopsutils(t *testing.T) {
 	parts, err := disk.Partitions(false)
 	if err != nil {
@@ -56,6 +58,44 @@ func TestDiskStatGopsutils(t *testing.T) {
 		}
 	}
 
+}
+
+// Test SysStats as per production file
+// sys_stats: # system stats intervals  vm_stats: every: "15s" name: vm  disk_stats: every: "30s" name: disk
+func TestProdStats(t *testing.T) {
+	mgr := GetManager()
+	conf := &StatsConfig{
+		DiskStats: &DiskConfig{
+			statConfig: statConfig{
+				Name:  "disk",
+				Every: "30s",
+			},
+		},
+		VMStats: &VMConfig{
+			statConfig: statConfig{
+				Name:  "vm",
+				Every: "15s",
+			},
+		},
+	}
+
+	ok, err := mgr.ReadConfig(conf)
+	if ok {
+		fmt.Println("sysstats read config ok. Starting")
+		mgr.Start()
+	} else {
+		log.Fatal("mgr.ReadConfig failed: ", err.Error())
+	}
+
+	// Terminate loop after timeout, in future use config parameter to stops stats
+	timeout := time.After(35*time.Second)
+	for {
+		select {
+		// Got a timeout! fail with a timeout error
+		case <-timeout:
+			return
+		}
+	}
 }
 
 func TestDiskStatCall(t *testing.T) {
