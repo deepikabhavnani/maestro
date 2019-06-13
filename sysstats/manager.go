@@ -224,7 +224,7 @@ func (mgr *SysStats) OneTimeRun(name string) (stat *StatPayload, err error) {
 	if ok {
 		rstat, ok := rstatP.(RunnableStat)
 		if ok {
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(2)*time.Millisecond)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10)*time.Millisecond)
 			defer cancel()
 			stat, err = rstat.RunStat(ctx, true)
 		} else {

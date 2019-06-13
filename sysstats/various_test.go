@@ -16,10 +16,10 @@ package sysstats
 // limitations under the License.
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
 	"log"
-	"time"
+	//"time"
 	"testing"
 
 	"github.com/armPelionEdge/gopsutil/disk"
@@ -47,6 +47,41 @@ func TestDiskStatGopsutils(t *testing.T) {
 		}
 	}
 
+	usagedata := make(map[string]*disk.UsageStat)
+	var dat *disk.UsageStat
+
+	for _, part := range parts {
+		if len(part.Mountpoint) > 0 {
+			dat, err = disk.Usage(part.Mountpoint)
+			if err != nil {
+				log.Fatal("Partitions() error: ", err.Error())
+			} else {
+				usagedata[part.Mountpoint] = dat
+				fmt.Printf("[%s] Usage = %+v\n", part.Mountpoint, dat)
+			}
+		}
+	}
+}
+
+/*
+// Test to check disk stats from gopsutil package
+func TestDiskStatGopsutils(t *testing.T) {
+	parts, err := disk.Partitions(false)
+	if err != nil {
+		log.Fatal("Partitions() error: ", err.Error())
+	} else {
+		fmt.Printf("Partitions() = %+v\n", parts)
+	}
+
+	for _, part := range parts {
+		amap, err2 := disk.IOCounters(part.Device)
+		if err2 != nil {
+			log.Fatal("Partitions() error: ", err2.Error())
+		} else {
+			fmt.Printf("[%s] IOCounters = %+v\n", part.Device, amap)
+		}
+	}
+
 	for _, part := range parts {
 		if len(part.Mountpoint) > 0 {
 			stat, err2 := disk.Usage(part.Mountpoint)
@@ -68,7 +103,7 @@ func TestProdStats(t *testing.T) {
 		DiskStats: &DiskConfig{
 			statConfig: statConfig{
 				Name:  "disk",
-				Every: "30s",
+				Every: "2s",
 			},
 		},
 		VMStats: &VMConfig{
@@ -88,7 +123,7 @@ func TestProdStats(t *testing.T) {
 	}
 
 	// Terminate loop after timeout, in future use config parameter to stops stats
-	timeout := time.After(35*time.Second)
+	timeout := time.After(100*time.Second)
 	for {
 		select {
 		// Got a timeout! fail with a timeout error
@@ -144,7 +179,7 @@ func TestDiskStatCall(t *testing.T) {
 	fmt.Printf("as JSON:\n%s", string(json))
 
 }
-
+*/
 // To run test:
 // sub out for your directories
 // sudo GOROOT=/opt/go PATH="$PATH:/opt/go/bin" GOPATH=/home/ed/work/gostuff LD_LIBRARY_PATH=../../greasego/deps/lib /opt/go/bin/go test
