@@ -75,10 +75,6 @@ type statConfig struct {
 	configVer int32
 }
 
-// type DiskConfig struct {
-// 	statConfig
-// }
-
 // StatsConfig is used to configure the sysstats (system stats) subsystem
 type StatsConfig struct {
 	//	loopInterval int64       `yaml:"loop_interval" json:"loop_interval"`
@@ -87,7 +83,14 @@ type StatsConfig struct {
 }
 
 func SubscribeToEvents() (ret events.EventSubscription, err error) {
-	ret, err = events.SubscribeToChannel(statEventsChannel, 0)
+	if len(statEventsChannel) > 0 {
+		ret, err = events.SubscribeToChannel(statEventsChannel, 0)
+		if err != nil {
+			ret.ReleaseChannel()
+		}
+	} else {
+		err = errors.New("Channel not ready")
+	}
 	return
 }
 
@@ -115,11 +118,6 @@ func (stat *statConfig) Validate() (ok bool, err error) {
 	return
 }
 
-// type ProcessStatsConfig interface {
-// 	GetInterval() uint32
-// 	GetConfig_CheckMem() (uint32, bool)
-// }
-
 type SysStats struct {
 	masterInterval time.Duration
 	counter        int64
@@ -132,32 +130,6 @@ type SysStats struct {
 
 	statCallers sync.Map
 }
-
-// type event struct {
-// 	Name string `json:"name"`
-// 	When int64  `json:"when"`
-// }
-
-// type MemStatEvent struct {
-// 	event                        // base class
-// 	stat  *mem.VirtualMemoryStat // straigh outta here: https://github.com/armPelionEdge/gopsutil/blob/master/mem/mem.go
-// }
-
-// func NewVirtualMemEvent(stats *mem.VirtualMemoryStat) (ret *MemStatEvent) {
-// 	ret = new(MemStatEvent)
-// 	ret.Name = "VirtualMemory"
-// 	ret.When = time.Now().UnixNano()
-// 	ret.stat = stats
-// 	return
-// }
-
-// func NewVirtualMemEvent(stats *mem.VirtualMemoryStat) (ret *MemStatEvent) {
-// 	ret = new(MemStatEvent)
-// 	ret.Name = "VirtualMemory"
-// 	ret.When = time.Now().UnixNano()
-// 	ret.stat = stats
-// 	return
-// }
 
 // StatPayload carries the stat along with a 'name'
 type StatPayload struct {
@@ -314,7 +286,7 @@ func GetManager() *SysStats {
 			// The main NetEventChannel is a fanout (separate queues for each subscriber) and is non-persistent
 			var ok bool
 			var err error
-			ok, statEventsChannel, err = events.MakeEventChannel(statEventsChannelName, true, false)
+			ok, statEventsChannel, err = events.MakeEventChannel(statEventsChannelName, false, false)
 			if err != nil || !ok {
 				if err != nil {
 					log.MaestroErrorf("NetworkManager: Can't create stat event channel. Not good. --> %s\n", err.Error())
