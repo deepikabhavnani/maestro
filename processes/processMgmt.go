@@ -1049,28 +1049,6 @@ eventLoop:
 	for true {
 		debugging.DEBUG_OUT("************************************* maestro processEventsWorker() ********************************\n")
 		select {
-		// MOVED TO sysstats package
-		// case <-internalTicker.C:
-		// 	counter++
-		// 	debugging.DEBUG_OUT("COUNTER ---------------------------> : %d\n",counter)
-		// 	// check intervals
-		// 	//
-		// 	if statsConfig != nil {
-		// 		pace, ok := statsConfig.GetConfig_CheckMem()
-		// 		if ok && (counter % pace == 0) {
-		// 			debugging.DEBUG_OUT("   **** Check mem stats")
-
-		// 			stats, err := mem.VirtualMemory()
-		// 			var ev *MemStatEvent
-		// 			if err == nil {
-		// 				ev = NewVirtualMemEvent(stats)
-		// 			} else {
-		// 				ev = NewVirtualMemEvent(nil)
-		// 			}
-		// 			SubmitEvent(*ev)
-		// 		}
-
-		// 	}
 		case ev := <-controlChan:
 			debugging.DEBUG_OUT("************************>>>>>>>>>> Got internal event: %+v\n", ev)
 			if ev.code == internalEvent_shutdown {
@@ -1398,13 +1376,11 @@ func sawClosedRedirectedFD() {
 // a valid PID is returned if a reap happened, otherwise 0
 func ReapChildren() (ret int, status unix.WaitStatus) {
 	ret = 0
-	//	usage := new(unix.Rusage)
-
 	stop := 2
 
 mainReapLoop:
 	for stop > 0 {
-		pid, err := unix.Wait4(-1, &status, const_WNOHANG|const_WUNTRACED|const_WCONTINUED, nil) //usage)
+		pid, err := unix.Wait4(-1, &status, const_WNOHANG|const_WUNTRACED|const_WCONTINUED, nil) //usage
 		debugging.DEBUG_OUT("ReapChildren() = %d %d\n", pid, err)
 		if err == nil || err == syscall.Errno(0) {
 			ret = pid
