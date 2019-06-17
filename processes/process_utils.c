@@ -65,34 +65,6 @@ void free_error_str(char *str) {
 	}
 }
 
-
-pid_t reapChildren() {
-	int status = 0;
-	pid_t reaped = waitpid((pid_t) -1,&status,WNOHANG|WUNTRACED|WCONTINUED);
-	int was_exit = 0;
-	if(reaped > 0) {
-		if(WIFEXITED(status)) {
-			printf("PID %d exited\n",reaped);
-			was_exit =1;
-		}
-		if(WEXITSTATUS(status)) {
-			printf("Process had exit of %d\n",WEXITSTATUS(status));
-		} else {
-			printf("process exited normally\n");
-		}
-		if(WIFSIGNALED(status)) {
-			was_exit = 1;
-			printf("process got terminating signal %d\n",WTERMSIG(status));
-		}
-		if(WIFSTOPPED(status)) {
-			printf("process got STOP signal %d\n",WSTOPSIG(status));
-		}
-		if(WIFCONTINUED(status)) {
-			printf("process got CONTINUE job control\n");
-		}
-	}
-}
-
 // Here memory is allocated for array of strings
 // Memory for string elements in arrat is not allocated here
 // Look for `C.CString(s)` in func convertToCStrings for allocation
@@ -130,14 +102,8 @@ void childClosedFDCallback (GreaseLibError *err, int stream_type, int fd) {
 		printf("CHILD CLOSED FD: type %d, fd %d\n", stream_type,fd);
 		GreaseLib_removeFDForStdout(fd);
 		sawClosedRedirectedFD(); // call back into Go land
-
-		// pid_t lastpid;
-		// while((lastpid = reapChildren()) > 0) {
-		// 	printf("Reaped %d\n",lastpid);
-		// }
 	}
 }
-
 
 int createChild(char* szCommand,
 		char* aArguments[],
@@ -318,9 +284,7 @@ int createChild(char* szCommand,
 		}
 		// <----
 
-		//    close(aErrorPipe[PIPE_WRITE]);
-
-
+		close(aErrorPipe[PIPE_WRITE]);
 		DBG_MAESTRO("createChild exit() child");
 		exit(nResult);
 	} else if (nChild > 0) {
@@ -334,7 +298,6 @@ int createChild(char* szCommand,
 		close(aStdoutPipe[PIPE_WRITE]);
 		close(aStderrPipe[PIPE_WRITE]);
 		close(aErrorPipe[PIPE_WRITE]);
-
 
 		int _errno = 0;
 
@@ -380,9 +343,6 @@ int createChild(char* szCommand,
 		close(aStdoutPipe[PIPE_WRITE]);
 		close(aStderrPipe[PIPE_READ]);
 		close(aStderrPipe[PIPE_WRITE]);
-
-
 	}
 	return nChild;
-
 }
