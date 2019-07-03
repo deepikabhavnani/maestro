@@ -229,7 +229,7 @@ struct uint64_t_eqstrP {
 
 //#define LOGGER_HEAVY_DEBUG 1
 #define MAX_IDENTICAL_FILTERS 16
-#define LOGGER_HEAVY_DEBUG
+
 #ifdef LOGGER_HEAVY_DEBUG
 #pragma message "Build is Debug Heavy!!"
 // confused? here: https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
@@ -1209,9 +1209,13 @@ protected:
 
 			// discover socket max recieve size (this will be the max for a non-fragmented log message
 			int rcv_buf_size = 65536;
-			setsockopt(sink->socket_fd, SOL_SOCKET, SO_RCVBUF, &rcv_buf_size, (unsigned int) sizeof(int));
+			if (setsockopt(sink->socket_fd, SOL_SOCKET, SO_RCVBUF, &rcv_buf_size, (unsigned int) sizeof(int)) < 0) {
+				ERROR_PERROR("UnixDgramSink: Error setsockopt rcv_buf_size \n", errno);
+			}
 
-			getsockopt(sink->socket_fd, SOL_SOCKET, SO_RCVBUF, &rcv_buf_size, &optsize);
+			if (getsockopt(sink->socket_fd, SOL_SOCKET, SO_RCVBUF, &rcv_buf_size, &optsize) < 0) {
+				ERROR_PERROR("UnixDgramSink: Error getsockopt rcv_buf_size\n", errno);
+			}
 			// http://stackoverflow.com/questions/10063497/why-changing-value-of-so-rcvbuf-doesnt-work
 			if(rcv_buf_size < 100) {
 				ERROR_OUT("SyslogDgramSink: Failed to start reader thread - SO_RCVBUF too small\n");
@@ -1318,7 +1322,7 @@ protected:
 // //										// we figure out the log time here, via strptime() - but honestly, its gonna be when it was sent - so don't bother
 // //									}
 // 									pri = LOG_PRI(fac_pri);
-// 									if( pri < 8) {
+// 									if( fac_pri < 8) {
 // 										meta_syslog.level = GREASE_SYSLOGPRI_TO_LEVEL_MAP[pri];
 // 									} else {
 // 										meta_syslog.level = GREASE_LEVEL_LOG;
@@ -1729,10 +1733,6 @@ protected:
 			fd_set readfds;
 
 			char dump[5];
-
-//			struct timeval timeout;
-//			timeout.tv_sec = 0;
-//			timeout.tv_usec = SINK_KLOG_TV_USEC_START; // 0.25 seconds
 			int buf_size = sink->kernbufsize;
 
 			if(!sink->valid) {
@@ -1740,32 +1740,44 @@ protected:
 				return;
 			}
 
-
-
+			// Allocate buffers
 			char *temp_buffer_entry = (char *) malloc(buf_size);
-			int remaining_to_parse = buf_size;
+			if (NULL == temp_buffer_entry) {
+				ERROR_OUT("KernelProcKmsg2Sink: malloc failed %s\n",KERNLOG_PATH);
+				// Cleaup for sink
+                                close(sink->wakeup_pipe[0]);
+                                close(sink->wakeup_pipe[1]);
+                                sink->ready = false;
+                                sink->valid = false;
+				return;
+			}
+
 			GreaseLogger::klog_parse_state parse_state = LEVEL_BEGIN;
-			char *buf_curpos = temp_buffer_entry;
 			FD_ZERO(&readfds);
 			FD_SET(sink->wakeup_pipe[PIPE_WAIT], &readfds);
+
 			int _errno = 0;
 			int kmsg_fd = open_kmsg(KERNLOG_PATH, _errno);
-			if(kmsg_fd > 0) {
-				FD_SET(kmsg_fd,&readfds);
-			} else {
+			if(kmsg_fd < 0) {
 				ERROR_OUT("KernelProcKmsg2Sink: FATAL for thread. Can't open %s\n",KERNLOG_PATH);
+				FD_CLR(sink->wakeup_pipe[PIPE_WAIT], &readfds);
 				close(sink->wakeup_pipe[0]);
 				close(sink->wakeup_pipe[1]);
 				sink->ready = false;
 				sink->valid = false;
+				free(temp_buffer_entry);
 				return;
+			} else {
+				FD_SET(kmsg_fd,&readfds);
 			}
+
+			int remaining_to_parse = buf_size;
+			char *buf_curpos = temp_buffer_entry;
 
 			int last_fd = kmsg_fd + 1;
 			if(sink->wakeup_pipe[PIPE_WAIT] > last_fd)
 				last_fd = sink->wakeup_pipe[PIPE_WAIT]+1;
 
-			//			FD_SET(sink->socket_fd, &readfds);
 			DECL_LOG_META(meta_klog, GREASE_TAG_KERNEL, GREASE_LEVEL_LOG, 0 ); // static meta struct we will use
 			int Z = 0;
 			int reads = 0;
@@ -1904,7 +1916,13 @@ protected:
 //					}
 //				}
 //			}
-
+                        FD_CLR(sink->wakeup_pipe[PIPE_WAIT], &readfds);
+                        FD_CLR(kmsg_fd, &readfds);
+                        close(sink->wakeup_pipe[0]);
+                        close(sink->wakeup_pipe[1]);
+                        close(kmsg_fd);
+                        sink->ready = false;
+                        sink->valid = false;
 			free(temp_buffer_entry);
 		}
 

@@ -77,7 +77,6 @@ typedef struct {
 	void *_shadow; // this is the original C++ GreaseLogger::lohBuf object, which we can't have a proper point to - so we just do this
 } GreaseLibBuf;
 
-void GreaseLib_getVersion(char *s, int len);
 void GreaseLib_init_GreaseLibBuf(GreaseLibBuf *b);
 GreaseLibBuf *GreaseLib_new_GreaseLibBuf(size_t l);
 void GreaseLib_cleanup_GreaseLibBuf(GreaseLibBuf *b); // should be called when the callback is done using the buffer it was handed
@@ -253,7 +252,7 @@ LIB_METHOD_SYNC(enableTarget, TargetId id);
 LIB_METHOD_SYNC(flush, TargetId id);
 
 extern const TagId GREASE_SYSLOGFAC_TO_TAG_MAP[22];
-extern const LevelMask GREASE_KLOGLEVEL_TO_LEVEL_MAP[8];
+extern const LevelMask GREASE_KLOGLEVEL_TO_LEVEL_MAP[20];
 extern const LevelMask GREASE_KLOG_DEFAULT_LEVEL;
 
 

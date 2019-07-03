@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 		if(!strcmp(argv[1]+2,"help")) {
 			printf("Usage: grease_echo [--check] | { [--socket PATH] [--origin NUM] [--[LEVEL]] \"string here\" }\n"
 				   "            --socket PATH  use a custom path to the grease socket. Must be first argument.\n"
-				   "                           Needs an absolute path. default:" GREASE_DEFAULT_SINK_PATH "\n"
+				   "                           Needs an absolute path.\n"
 				   "            --origin NUM   use a specified origin-id number, instead of the 'grease echo' constant\n"
 				   "            --check        will check to see if logger is live. (Use with no other args)\n"
 				   "LEVELs:     --error\n"
@@ -100,13 +100,13 @@ int main(int argc, char *argv[]) {
 		int _loop = 0;
 		do {
 			_loop = 0;
-			if(argv[opt_n+1] && !strcmp(argv[opt_n+1]+2,"socket")){
+			if(!strcmp(argv[opt_n+1]+2,"socket")){
 				socket_path = argv[opt_n+2];
 				opt_n += 2;
 				_loop = 1;
 			}
 
-			if(argv[opt_n+1] && !strcmp(argv[opt_n+1]+2,"origin")) {
+			if(!strcmp(argv[opt_n+1]+2,"origin")) {
 				printf("GOT %s\n", argv[opt_n+2]);
 				int z = atoi(argv[opt_n+2]);
 				printf("GOT %d\n", z);
@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr,"    Error: Grease not running.\n");
 		}
 
-		if(argc > opt_n+2 && argv[opt_n+2] && argv[opt_n+2][0] != '\0') {
+		if(argc > opt_n+2 && argv[opt_n+2][0] != '\0') {
 			if(!strcmp(argv[n+1]+2,"info")) {
 				echo_meta.level = GREASE_LEVEL_INFO;
 				grease_printf(&echo_meta, argv[2] );
@@ -189,7 +189,7 @@ int main(int argc, char *argv[]) {
 	if(grease_fastInitLogger_extended(socket_path) != GREASE_OK) {
 		fprintf(stderr,"    Error: Grease not running.\n");
 	}
-	if(argv[opt_n+1] && argv[opt_n+1][0] != '\0') {
+	if(argv[opt_n+1][0] != '\0') {
 		echo_meta.level = GREASE_LEVEL_LOG;
 		grease_printf(&echo_meta, argv[opt_n+1] );
 	}
