@@ -312,11 +312,9 @@ int main() {
 
 	if((ret = GreaseLib_addSink(sink)) != GREASE_LIB_OK) {
 		printf("ERROR on addSink(): %d",ret);
-		GreaseLib_cleanup_GreaseLibSink(sink);
 	}
 	if((ret = GreaseLib_addSink(klog_sink)) != GREASE_LIB_OK) {
 		printf("ERROR on addSink() - klog: %d",ret);
-		GreaseLib_cleanup_GreaseLibSink(klog_sink);
 	}
 	printf("after setup sink\n");
 
@@ -325,7 +323,6 @@ int main() {
 
 	if((ret = GreaseLib_addSink(sink2)) != GREASE_LIB_OK) {
 		printf("ERROR on addSink(): %d",ret);
-		GreaseLib_cleanup_GreaseLibSink(sink2);
 	}
 	printf("after setup sink\n");
 
