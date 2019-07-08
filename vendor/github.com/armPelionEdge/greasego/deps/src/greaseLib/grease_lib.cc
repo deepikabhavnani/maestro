@@ -361,7 +361,7 @@ LIB_METHOD(start) {
 }
 
 LIB_METHOD_SYNC(refLoop) {
-
+	return GREASE_LIB_OK;
 }
 
 LIB_METHOD(shutdown) {
@@ -1102,7 +1102,8 @@ GreaseLibSink *GreaseLib_new_GreaseLibSink(uint32_t sink_type, const char *path)
 	::memset(ret,0,sizeof(GreaseLibSink));
 	ret->sink_type = sink_type;
 	if(path) {
-		::strncpy(ret->path,path,GREASE_PATH_MAX);
+		::strncpy(ret->path,path,GREASE_PATH_MAX-1);
+		ret->path[GREASE_PATH_MAX-1] = '\0';
 	}
 	return ret;
 }
