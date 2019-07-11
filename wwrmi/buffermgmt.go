@@ -16,30 +16,12 @@ package wwrmi
 // limitations under the License.
 
 import (
-	"github.com/armPelionEdge/greasego"
 	"github.com/armPelionEdge/maestro/debugging"
 	"sync"
 )
 
-// type outboundBuffer struct {
-// 	data []byte
-// 	tries int
-// }
-
-// func (buf *outboundBuffer) clear() int {
-// 	// https://stackoverflow.com/questions/16971741/how-do-you-clear-a-slice-in-go
-// 	buf.data =  buf.data[:0]
-// 	copy(buf.data,[]bytes("["))
-// 	return len(buf.data)
-// }
-
-// func (buf *outboundBuffer) closeout() {
-// 	// replace the last ',' with a
-// 	buf.data[len(buf.data)-1] = byte(']')
-// }
-
 type logBuffer struct {
-	data   *greasego.TargetCallbackData
+	data   *byte
 	godata []byte
 	// the amount of times we have tried to send this log to the cloud
 	tries int

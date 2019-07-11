@@ -33,7 +33,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/armPelionEdge/greasego"
 	"github.com/armPelionEdge/hashmap" // thread-safe, fast hashmaps
 	"github.com/armPelionEdge/maestro/configMgr"
 	"github.com/armPelionEdge/maestro/configs"
@@ -645,10 +644,8 @@ func (this *epollListener) listener() {
 								if job.originLabelId > 0 {
 									originid = job.originLabelId
 								} else {
-									originid = greasego.GetUnusedOriginId()
+									originid =  iota
 								}
-								greasego.AddFDForStdout(int(this.events[ev].Fd), originid)
-								greasego.AddOriginLabel(job.originLabelId, job.job.GetJobName())
 								job.status = RUNNING
 								// submit an event that process is RUNNING
 								debugging.DEBUG_OUT("Got process_ready (OK string) for %s\n", job.job.GetJobName())

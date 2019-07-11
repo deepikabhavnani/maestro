@@ -27,7 +27,6 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 	//	"github.com/armPelionEdge/mustache"
-	"github.com/armPelionEdge/greasego"
 	"github.com/armPelionEdge/maestro/configs"
 	"github.com/armPelionEdge/maestro/debugging"
 	. "github.com/armPelionEdge/maestro/defaults"
@@ -138,7 +137,7 @@ type LogTarget struct {
 	Format                   LogFormat                        `yaml:"format,omitempty"`
 	Filters                  []LogFilter                      `yaml:"filters"`
 	Rotate                   LogRotate                        `yaml:"rotate,omitempty" greaseAssign:"FileOpts"`
-	ExampleFileOpts          greasego.GreaseLibTargetFileOpts `greaseType:"FileOpts"`
+	ExampleFileOpts          []byte `greaseType:"FileOpts"`
 	Delim                    string                           `yaml:"delim,omitempty" greaseAssign:"Delim"`
 	FormatPre                string                           `yaml:"format_pre,omitempty" greaseAssign:"Format_pre"`
 	FormatTime               string                           `yaml:"format_time,omitempty" greaseAssign:"Format_time"`
@@ -493,16 +492,16 @@ func ConvertLevelStringToUint32Mask(levels string) uint32 {
 	for _, s := range parts {
 		s = strings.TrimSpace(s)
 		if strings.Compare(s, "all") == 0 {
-			return uint32(greasego.GREASE_ALL_LEVELS)
+			return 20 // TODO
 		} else {
-			ret |= greasego.DefaultLevelMap[s]
+			ret 20	//TODO
 		}
 	}
 	return ret
 }
 
 func ConvertTagStringToUint32(tag string) uint32 {
-	return greasego.DefaultTagMap[strings.TrimSpace(tag)]
+	return 0  //greasego.DefaultTagMap[strings.TrimSpace(tag)]
 }
 
 func ConfigGetMinDiskSpaceScratch() uint64 {

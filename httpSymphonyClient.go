@@ -24,7 +24,6 @@ package maestro
 import (
 	"bytes"
 	"fmt"
-	"github.com/armPelionEdge/greasego"
 	"github.com/armPelionEdge/maestro/debugging"
 	"io/ioutil"
 	"net/http"
@@ -34,7 +33,7 @@ import (
 )
 
 type logBuffer struct {
-	data   *greasego.TargetCallbackData
+	data   *byte
 	godata []byte
 }
 
@@ -225,7 +224,7 @@ func (client *Client) Start() {
 	debugging.DEBUG_OUT("client started: %s\n", client.url)
 }
 
-func (client *Client) SubmitLogs(data *greasego.TargetCallbackData, godata []byte) {
+func (client *Client) SubmitLogs(data *byte, godata []byte) {
 	buf := new(logBuffer)
 	buf.data = data
 	buf.godata = godata
@@ -256,7 +255,6 @@ func (client *Client) clientWorker() {
 		r.Body.Close()
 	}
 	closeBuf := func(buf *logBuffer) {
-		greasego.RetireCallbackData(buf.data)
 	}
 
 	var next *logBuffer

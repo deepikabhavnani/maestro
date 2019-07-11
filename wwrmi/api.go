@@ -20,7 +20,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"github.com/armPelionEdge/greasego"
 	"github.com/armPelionEdge/maestro/debugging"
 	"github.com/armPelionEdge/maestro/events"
 	"github.com/armPelionEdge/maestro/log"
@@ -408,10 +407,8 @@ func NewClient(config *ClientConfig) (ret *Client, err error) {
 	return
 }
 
-func (client *Client) SubmitLogs(data *greasego.TargetCallbackData, godata []byte) (err error) {
+func (client *Client) SubmitLogs(data *byte, godata []byte) (err error) {
 	
-	// copy(client.activeBuffer.data[lenactive:],godata)
-	// return
 	buflen := len(godata)
 	buf := client.availableFifo.PopOrWait()
 	if buf == nil {
@@ -431,7 +428,6 @@ func (client *Client) SubmitLogs(data *greasego.TargetCallbackData, godata []byt
 			client.locker.Lock()
 			client.sendableBytes = client.sendableBytes - uint32(len(droppedbuf.godata))
 			client.locker.Unlock()
-			greasego.RetireCallbackData(droppedbuf.data)
 			droppedbuf.clear()
 			client.availableFifo.Push(droppedbuf)
 		}
@@ -453,8 +449,7 @@ func (client *Client) SubmitLogs(data *greasego.TargetCallbackData, godata []byt
 var _count int
 
 // This is a target callback to assign to the grease subsystem.
-func TargetCB(err *greasego.GreaseError, data *greasego.TargetCallbackData) {
-
+func TargetCB(err *byte, data *byte) {
 	_count++
 	debugging.DEBUG_OUT("}}}}}}}}}}}} TargetCB_count called %d times\n", _count)
 	if err != nil {
@@ -466,7 +461,6 @@ func TargetCB(err *greasego.GreaseError, data *greasego.TargetCallbackData) {
 		if err2 == nil {
 			client.locker.Lock()
 			if !client.logWorkerRunning {
-				greasego.RetireCallbackData(data)
 				client.locker.Unlock()
 				log.MaestroErrorf("RMI client not ready! log worker not running.")
 				return
@@ -475,7 +469,6 @@ func TargetCB(err *greasego.GreaseError, data *greasego.TargetCallbackData) {
 			client.SubmitLogs(data, buf)
 		} else {
 			log.MaestroErrorf("RMI client not ready! logs will be dropped. details: %s", err2.Error())
-			greasego.RetireCallbackData(data)
 		}
 	}
 }
@@ -617,7 +610,6 @@ func (client *Client) clientLogWorker() {
 			for buf != nil {
 				if buf.tries > maxLogTries {
 					debugging.DEBUG_OUT("RMI ERROR: dropping a log buffer (max tries)\n")
-					greasego.RetireCallbackData(buf.data)
 					buf.clear()
 					client.availableFifo.Push(buf)
 				} else {
@@ -640,11 +632,8 @@ func (client *Client) clientLogWorker() {
 			client.sendableBytes = client.sendableBytes - client.sentBytes
 			client.sentBytes = 0
 			client.locker.Unlock()
-			// buffers were sent. So let's retire all those greasego buffer's back
-			// to the library
 			buf := client.sendingFifo.Pop()
 			for buf != nil {
-				greasego.RetireCallbackData(buf.data)
 				buf.clear()
 				client.availableFifo.Push(buf)
 				buf = client.sendingFifo.Pop()
